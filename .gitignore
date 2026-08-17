@@ -1,0 +1,6 @@
+players.csv
+players.csv.gz
+wc-players.csv
+wikidata-players.json
+wd-batch*.json
+_names_sample.txt
