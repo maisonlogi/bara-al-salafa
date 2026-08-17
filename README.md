@@ -1,16 +1,12 @@
 # برا السالفة + Who Am I
 
-ألعاب جوال للعب الجماعي على هاتف واحد.
+المستودع عام. افتح اللعبة من هنا:
 
-**افتح من الهاتف:** https://maisonlogi.github.io/bara-al-salafa/
+**https://maisonlogi.github.io/bara-al-salafa/**
+
+كود المشروع: https://github.com/maisonlogi/bara-al-salafa
 
 ## الألعاب
 
 1. **برا السالفة** — عربي: واحد ما يعرف السر والباقي يحاولون يكشفونه.
 2. **Who Am I?** — English: لاعبو كرة قدم مع صور. تشوف لاعبين الباقيين، مو لاعبك.
-
-## تشغيل محلي (اختياري)
-
-```bash
-npx --yes serve . -l tcp://0.0.0.0:5173
-```

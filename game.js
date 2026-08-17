@@ -825,14 +825,14 @@
 
   function escapeHtml(str) {
     return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
+      .split("&").join("&amp;")
+      .split("<").join("&lt;")
+      .split(">").join("&gt;")
+      .split('"').join("&quot;");
   }
 
   function escapeAttr(str) {
-    return escapeHtml(str).replaceAll("'", "&#39;");
+    return escapeHtml(str).split("'").join("&#39;");
   }
 
   function validateNames() {
@@ -1023,8 +1023,8 @@
       case "create-topic": {
         const titleEl = app.querySelector("[data-new-title]");
         const itemsEl = app.querySelector("[data-new-items]");
-        const title = (titleEl?.value || "").trim();
-        const items = String(itemsEl?.value || "")
+        const title = (titleEl && titleEl.value ? titleEl.value : "").trim();
+        const items = String(itemsEl && itemsEl.value ? itemsEl.value : "")
           .split(/\r?\n/)
           .map((x) => x.trim())
           .filter(Boolean);
@@ -1046,7 +1046,7 @@
       }
       case "add-item": {
         const input = app.querySelector("[data-new-item]");
-        addItem(input?.value || "");
+        addItem((input && input.value) || "");
         break;
       }
       case "start-edit":
@@ -1059,7 +1059,7 @@
         break;
       case "save-item": {
         const input = app.querySelector("[data-edit-input]");
-        saveItemEdit(Number(t.dataset.index), input?.value || "");
+        saveItemEdit(Number(t.dataset.index), (input && input.value) || "");
         break;
       }
       case "delete-item":

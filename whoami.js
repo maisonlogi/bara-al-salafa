@@ -4,7 +4,9 @@
   const imageCache = Object.create(null);
 
   function fallbackAvatar(name) {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d2a32&color=ffb454&size=256&bold=true`;
+    const label = String(name || "?").slice(0, 18);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#0d2a32"/><text x="50%" y="54%" text-anchor="middle" fill="#ffb454" font-size="28" font-family="sans-serif">${label.split("<").join("").split("&").join("")}</text></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   }
 
   async function loadImage(player) {

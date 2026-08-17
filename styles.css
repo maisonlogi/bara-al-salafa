@@ -12,8 +12,8 @@
   --line: rgba(232, 244, 242, 0.12);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   --radius: 22px;
-  --font: "Cairo", system-ui, sans-serif;
-  --display: "Rakkas", "Cairo", serif;
+  --font: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Geeza Pro", sans-serif;
+  --display: "Segoe UI", Tahoma, "Noto Naskh Arabic", sans-serif;
 }
 
 *,
@@ -755,7 +755,7 @@ textarea[data-new-items]:focus,
 
 .game-card-en {
   text-align: left;
-  font-family: "Outfit", var(--font);
+  font-family: var(--font);
   background:
     radial-gradient(500px 220px at 0% 0%, rgba(47, 212, 182, 0.16), transparent 55%),
     var(--glass);
@@ -781,7 +781,7 @@ textarea[data-new-items]:focus,
 }
 
 .game-card-en strong {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font);
   font-weight: 800;
 }
 
@@ -793,17 +793,17 @@ textarea[data-new-items]:focus,
 }
 
 .whoami-screen {
-  font-family: "Outfit", var(--font);
+  font-family: var(--font);
 }
 
 .whoami-hero h1 {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font);
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .whoami-brand {
-  font-family: "Outfit", sans-serif !important;
+  font-family: var(--font) !important;
   font-weight: 800;
 }
 
