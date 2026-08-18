@@ -12,6 +12,7 @@
     { id: "celebrities", title: "شخصيات مشهورة", desc: "مشاهير عالميين جداً", builtin: true },
     { id: "countries", title: "أسماء دول", desc: "دول من حول العالم", builtin: true },
     { id: "algerianFood", title: "أكلات جزائرية", desc: "أطباق جزائرية أصيلة", builtin: true },
+    { id: "randomMix", title: "عشوائي", desc: "كلمات من كل مكان", builtin: true },
   ];
 
   const state = {
