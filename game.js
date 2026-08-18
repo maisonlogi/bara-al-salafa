@@ -15,7 +15,7 @@
   ];
 
   const state = {
-    gameMode: "pick", // pick | bara | whoami
+    gameMode: "pick", // pick | bara | whoami | forbidden
     step: "pick",
     playerCount: 3,
     players: ["", "", ""],
@@ -39,6 +39,7 @@
   };
 
   let whoamiState = window.WhoAmI ? window.WhoAmI.createState() : null;
+  let forbiddenState = window.ForbiddenWord ? window.ForbiddenWord.createState() : null;
 
   let store = loadStore();
 
@@ -236,6 +237,16 @@
       return;
     }
 
+    if (state.gameMode === "forbidden" && window.ForbiddenWord && forbiddenState) {
+      window.__forbiddenRerender = () => render();
+      window.__forbiddenExtraTopics = (store.custom || []).map(function (c) {
+        return { id: c.id, title: c.title, words: c.items || [] };
+      });
+      const node = window.ForbiddenWord.render(forbiddenState, { el, escapeHtml, escapeAttr });
+      app.appendChild(node);
+      return;
+    }
+
     const map = {
       home: renderHome,
       setup: renderSetup,
@@ -278,6 +289,11 @@
             <span class="game-card-kicker">English</span>
             <strong>Who Am I?</strong>
             <span>Top 800 footballers by market value, with photos. You see everyone else — never yourself.</span>
+          </button>
+          <button class="game-card" data-action="pick-forbidden" type="button">
+            <span class="game-card-kicker">عربي</span>
+            <strong>الكلمة الممنوعة</strong>
+            <span>كل واحد عنده كلمة ممنوع ما يشوفها. الباقي يعرفونها ويستدرجونه.</span>
           </button>
         </div>
       </section>
@@ -956,15 +972,52 @@
       return;
     }
 
+    if (action === "pick-forbidden") {
+      if (!window.ForbiddenWord) {
+        shakeAndAlert("اللعبة ما تحمّلت — حدّث الصفحة");
+        return;
+      }
+      state.gameMode = "forbidden";
+      state.step = "fw-home";
+      forbiddenState = window.ForbiddenWord.createState();
+      document.documentElement.lang = "ar";
+      document.documentElement.dir = "rtl";
+      document.title = "الكلمة الممنوعة";
+      render();
+      return;
+    }
+
     if (action === "to-pick") {
       clearDiscussTimer();
       state.gameMode = "pick";
       state.step = "pick";
       whoamiState = window.WhoAmI ? window.WhoAmI.createState() : null;
+      forbiddenState = window.ForbiddenWord ? window.ForbiddenWord.createState() : null;
       document.documentElement.lang = "ar";
       document.documentElement.dir = "rtl";
       document.title = "اختر اللعبة";
       render();
+      return;
+    }
+
+    if (state.gameMode === "forbidden" && window.ForbiddenWord && forbiddenState && action.startsWith("fw-")) {
+      if (action === "fw-pick-topic") {
+        window.ForbiddenWord.pickTopic(forbiddenState, t.dataset.id);
+        render();
+        return;
+      }
+      const handled = window.ForbiddenWord.handleAction(action, forbiddenState, {
+        onExit: () => {
+          state.gameMode = "pick";
+          state.step = "pick";
+          document.documentElement.lang = "ar";
+          document.documentElement.dir = "rtl";
+          document.title = "اختر اللعبة";
+          render();
+        },
+        alert: shakeAndAlert,
+      });
+      if (handled && action !== "fw-exit") render();
       return;
     }
 
