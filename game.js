@@ -290,7 +290,7 @@
           <button class="game-card" data-action="pick-forbidden" type="button">
             <span class="game-card-kicker">عربي</span>
             <strong>الكلمة الممنوعة</strong>
-            <span>اشرح الكلمة بدون ما تقول الممنوعات. بطاقات عشوائية من 100+ موضوع.</span>
+            <span>كل لاعب يأخذ كلمة ممنوعة واحدة عشوائية. تشوف كلمات الباقي، مو كلمتك.</span>
           </button>
         </div>
       </section>

@@ -12,8 +12,16 @@
     return a;
   }
 
-  function deck() {
-    return window.FORBIDDEN_CARDS || [];
+  function uniqueCards() {
+    const seen = {};
+    const out = [];
+    (window.FORBIDDEN_CARDS || []).forEach(function (c) {
+      const key = (c.word || "").trim();
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      out.push({ topic: c.topic, word: key });
+    });
+    return out;
   }
 
   function createState() {
@@ -21,68 +29,26 @@
       step: "fw-home",
       playerCount: 3,
       players: ["", "", ""],
-      scores: [0, 0, 0],
-      explainer: 0,
-      cards: [],
-      cardIndex: 0,
-      seconds: 60,
-      timerId: null,
-      turnGot: 0,
-      turnSkip: 0,
-      turnTaboo: 0,
-      finishedTurns: 0,
+      assignments: [],
+      revealIndex: 0,
+      playSeconds: 180,
+      playTimerId: null,
     };
   }
 
-  function startMatch(state) {
-    state.scores = [];
-    for (let i = 0; i < state.playerCount; i += 1) state.scores.push(0);
-    state.explainer = 0;
-    state.finishedTurns = 0;
-    state.cards = shuffle(deck());
-    state.cardIndex = 0;
-  }
-
-  function startTurn(state) {
+  function deal(state) {
+    const pool = shuffle(uniqueCards());
+    state.assignments = pool.slice(0, state.playerCount);
+    state.revealIndex = 0;
+    state.playSeconds = 180;
     clearTimer(state);
-    state.seconds = 60;
-    state.turnGot = 0;
-    state.turnSkip = 0;
-    state.turnTaboo = 0;
-    if (state.cardIndex >= state.cards.length - 5) {
-      state.cards = state.cards.concat(shuffle(deck()));
-    }
-  }
-
-  function currentCard(state) {
-    return state.cards[state.cardIndex] || null;
-  }
-
-  function nextCard(state) {
-    state.cardIndex += 1;
-    if (state.cardIndex >= state.cards.length) {
-      state.cards = state.cards.concat(shuffle(deck()));
-    }
   }
 
   function clearTimer(state) {
-    if (state.timerId) {
-      clearInterval(state.timerId);
-      state.timerId = null;
+    if (state.playTimerId) {
+      clearInterval(state.playTimerId);
+      state.playTimerId = null;
     }
-  }
-
-  function startTimer(state, onTick) {
-    clearTimer(state);
-    state.timerId = setInterval(function () {
-      state.seconds -= 1;
-      if (onTick) onTick();
-      if (state.seconds <= 0) {
-        clearTimer(state);
-        state.step = "fw-turn-end";
-        if (window.__forbiddenRerender) window.__forbiddenRerender();
-      }
-    }, 1000);
   }
 
   function formatTime(total) {
@@ -105,9 +71,9 @@
       "fw-home": renderHome,
       "fw-setup": renderSetup,
       "fw-pass": renderPass,
-      "fw-card": renderCard,
-      "fw-turn-end": renderTurnEnd,
-      "fw-final": renderFinal,
+      "fw-role": renderRole,
+      "fw-play": renderPlay,
+      "fw-reveal": renderReveal,
     };
     return (map[state.step] || renderHome)(state, ctx);
   }
@@ -118,14 +84,12 @@
         topBar() +
         '<header class="brand">' +
         "<h1>الكلمة الممنوعة</h1>" +
-        "<p>اشرح الكلمة لرفاقك… بدون ما تنطقها ولا تنطق الكلمات الممنوعة.</p>" +
+        "<p>كل واحد عنده كلمة واحدة ممنوعة. هو ما يشوفها — الباقي يعرفونها ويحاولون يستدرجوه.</p>" +
         "</header>" +
-        '<div class="panel">' +
-        "<h2>كيف تلعبون؟</h2>" +
-        '<ul class="howto">' +
-        '<li><span class="num">1</span><div><strong>دور الشارح</strong><p>الجوال عنده وحده. الباقي يخمنون وما يشوفون الشاشة.</p></div></li>' +
-        '<li><span class="num">2</span><div><strong>بطاقة عشوائية</strong><p>كلمة ذهبية تشرحها، وتحتها كلمات حمراء ممنوع تقولها.</p></div></li>' +
-        '<li><span class="num">3</span><div><strong>60 ثانية</strong><p>صح = نقطة. تخطي = بطاقة جديدة. إذا نطقت ممنوعة = ما تحسب.</p></div></li>' +
+        '<div class="panel"><h2>كيف تلعبون؟</h2><ul class="howto">' +
+        '<li><span class="num">1</span><div><strong>توزّع الكلمات عشوائي</strong><p>ما تختارون موضوع. كل لاعب يأخذ كلمة ممنوعة واحدة.</p></div></li>' +
+        '<li><span class="num">2</span><div><strong>مرّروا الجوال</strong><p>تشوف كلمة كل واحد من الباقي. كلمتك أنت مخفية.</p></div></li>' +
+        '<li><span class="num">3</span><div><strong>تكلّموا مع بعض</strong><p>حاولوا تخلّونه ينطق كلمته، وهو كذلك معكم. اللي ينطق خسر.</p></div></li>' +
         "</ul></div>" +
         '<div class="actions">' +
         '<button class="btn btn-primary" data-action="fw-setup">ابدأ</button>' +
@@ -157,17 +121,17 @@
     const screen = ctx.el(
       '<section class="screen">' +
         topBar() +
-        '<header class="brand compact"><h1>اللاعبين</h1><p>2 أو 3 أو 4 — البطاقات تجي عشوائية</p></header>' +
+        '<header class="brand compact"><h1>اللاعبين</h1><p>2 أو 3 أو 4 — الكلمات تتوزع عشوائي</p></header>' +
         '<div class="panel"><h2>العدد</h2>' +
         '<div class="choice-grid" style="margin-bottom:16px">' +
-        countBtn(state, 2, "واحد يشرح والثاني يخمن") +
-        countBtn(state, 3, "واحد يشرح والاثنين يخمنون") +
-        countBtn(state, 4, "دور يلف على الكل") +
+        countBtn(state, 2, "كل واحد يعرف كلمة الثاني") +
+        countBtn(state, 3, "كل واحد يعرف كلمتين") +
+        countBtn(state, 4, "كل واحد يعرف ثلاث كلمات") +
         "</div><h2>الأسماء</h2>" +
         fields +
         "</div>" +
         '<div class="actions">' +
-        '<button class="btn btn-primary" data-action="fw-start">ابدأ الأدوار</button>' +
+        '<button class="btn btn-primary" data-action="fw-deal">وزّع الكلمات</button>' +
         '<button class="btn btn-ghost" data-action="fw-home">رجوع</button>' +
         "</div></section>"
     );
@@ -205,112 +169,99 @@
   }
 
   function renderPass(state, ctx) {
-    const name = state.players[state.explainer];
+    const name = state.players[state.revealIndex];
     return ctx.el(
       '<section class="screen">' +
         '<div class="cover-card">' +
         '<div class="pulse-ring" aria-hidden="true"></div>' +
-        '<div class="eyebrow">دور الشرح — 60 ثانية</div>' +
+        '<div class="eyebrow">مرّر الجوال بسرية</div>' +
         "<h2>" +
         ctx.escapeHtml(name) +
         "</h2>" +
-        "<p>أعطوا الجوال لـ <strong>" +
+        "<p>أعطِ الجوال لـ <strong>" +
         ctx.escapeHtml(name) +
-        "</strong> فقط. الباقي يخمنون وما يشوفون البطاقة.</p>" +
-        "</div>" +
+        "</strong> فقط. الباقي ما يشوفون الشاشة.</p></div>" +
         '<div class="actions">' +
-        '<button class="btn btn-primary" data-action="fw-open-card">أنا ' +
+        '<button class="btn btn-primary" data-action="fw-open-role">أنا ' +
         ctx.escapeHtml(name) +
-        " — ابدأ</button>" +
+        " — أظهر الكلمات</button>" +
+        (state.revealIndex === 0
+          ? '<button class="btn btn-ghost" data-action="fw-setup">رجوع</button>'
+          : "") +
         "</div></section>"
     );
   }
 
-  function renderCard(state, ctx) {
-    const card = currentCard(state);
-    if (!card) {
-      return ctx.el('<section class="screen"><p>ما في بطاقات</p></section>');
-    }
-    const taboos = (card.taboo || [])
-      .map(function (w) {
-        return '<li>' + ctx.escapeHtml(w) + "</li>";
+  function renderRole(state, ctx) {
+    const i = state.revealIndex;
+    const viewer = state.players[i];
+    const others = state.players
+      .map(function (name, idx) {
+        return { name: name, item: state.assignments[idx], idx: idx };
+      })
+      .filter(function (row) {
+        return row.idx !== i;
+      });
+
+    const cards = others
+      .map(function (row) {
+        return (
+          '<article class="taboo-card">' +
+          '<p class="taboo-topic">' +
+          ctx.escapeHtml(row.name) +
+          " ممنوع يقول</p>" +
+          "<h2>" +
+          ctx.escapeHtml(row.item.word) +
+          "</h2></article>"
+        );
       })
       .join("");
 
+    const last = i >= state.playerCount - 1;
     return ctx.el(
       '<section class="screen">' +
-        '<div class="taboo-top">' +
-        '<div class="timer" data-fw-timer>' +
-        formatTime(state.seconds) +
-        "</div>" +
+        '<div class="panel" style="text-align:center">' +
         '<p class="hint">' +
-        ctx.escapeHtml(state.players[state.explainer]) +
-        " يشرح · صح " +
-        state.turnGot +
-        "</p></div>" +
-        '<article class="taboo-card">' +
-        '<p class="taboo-topic">' +
-        ctx.escapeHtml(card.topic) +
+        ctx.escapeHtml(viewer) +
         "</p>" +
-        "<h2>" +
-        ctx.escapeHtml(card.word) +
-        "</h2>" +
-        '<p class="taboo-label">ممنوع تقول</p>' +
-        '<ul class="taboo-list">' +
-        taboos +
-        "</ul></article>" +
+        '<div class="role-pill out">كلمتك الممنوعة مخفية</div>' +
+        '<p class="hint">ما تشوف كلمتك. احفظ كلمة كل واحد من الباقي.</p></div>' +
+        '<div class="forbid-list">' +
+        cards +
+        "</div>" +
         '<div class="actions">' +
-        '<button class="btn btn-primary" data-action="fw-correct">صح — خمّنوا</button>' +
-        '<button class="btn btn-secondary" data-action="fw-skip">تخطي</button>' +
-        '<button class="btn btn-danger" data-action="fw-taboo">قال كلمة ممنوعة</button>' +
-        "</div></section>"
+        '<button class="btn btn-primary" data-action="fw-next-reveal">' +
+        (last ? "انتهينا — ابدأوا اللعب" : "اخفِ ومرّر للتالي") +
+        "</button></div></section>"
     );
   }
 
-  function renderTurnEnd(state, ctx) {
-    const name = state.players[state.explainer];
-    const more = state.finishedTurns + 1 < state.playerCount;
+  function renderPlay(state, ctx) {
     return ctx.el(
       '<section class="screen">' +
-        '<div class="panel result-hero">' +
-        '<span class="tag win">انتهى الوقت</span>' +
-        "<h2>" +
-        ctx.escapeHtml(name) +
-        "</h2>" +
-        '<div class="stats">' +
-        '<div class="stat-row"><span>صح</span><span>' +
-        state.turnGot +
-        "</span></div>" +
-        '<div class="stat-row"><span>تخطي</span><span>' +
-        state.turnSkip +
-        "</span></div>" +
-        '<div class="stat-row"><span>كلمة ممنوعة</span><span>' +
-        state.turnTaboo +
-        "</span></div>" +
-        '<div class="stat-row"><span>مجموع النقاط</span><span>' +
-        state.scores[state.explainer] +
-        "</span></div></div></div>" +
+        '<header class="brand compact"><h1>اللعب</h1><p>تكلّموا مع بعض. لا تقول الكلمة الممنوعة اللي عليك.</p></header>' +
+        '<div class="panel" style="text-align:center">' +
+        '<div class="timer" data-fw-timer>' +
+        formatTime(state.playSeconds) +
+        "</div>" +
+        '<p class="hint" style="margin:12px 0 0">إذا أحد نطق كلمته، وقّفوا وكشّفوا.</p></div>' +
         '<div class="actions">' +
-        (more
-          ? '<button class="btn btn-primary" data-action="fw-next-turn">دور اللاعب التالي</button>'
-          : '<button class="btn btn-primary" data-action="fw-final">النتيجة النهائية</button>') +
-        "</div></section>"
+        '<button class="btn btn-primary" data-action="fw-reveal">كشف الكلمات</button>' +
+        '<button class="btn btn-secondary" data-action="fw-toggle-timer">' +
+        (state.playTimerId ? "إيقاف المؤقّت" : "تشغيل 3 دقائق") +
+        "</button></div></section>"
     );
   }
 
-  function renderFinal(state, ctx) {
-    let best = 0;
-    for (let i = 1; i < state.playerCount; i += 1) {
-      if (state.scores[i] > state.scores[best]) best = i;
-    }
+  function renderReveal(state, ctx) {
     const rows = state.players
       .map(function (name, i) {
         return (
           '<div class="stat-row"><span>' +
           ctx.escapeHtml(name) +
-          '</span><span>' +
-          state.scores[i] +
-          " نقطة</span></div>"
+          "</span><span>" +
+          ctx.escapeHtml(state.assignments[i].word) +
+          "</span></div>"
         );
       })
       .join("");
@@ -318,15 +269,13 @@
     return ctx.el(
       '<section class="screen">' +
         '<div class="panel result-hero">' +
-        '<span class="tag win">الفائز</span>' +
-        "<h2>" +
-        ctx.escapeHtml(state.players[best]) +
-        "</h2>" +
-        '<div class="stats">' +
+        '<span class="tag lose">كشف</span>' +
+        "  <h2>الكلمات الممنوعة</h2>" +
+        '  <div class="stats">' +
         rows +
         "</div></div>" +
         '<div class="actions">' +
-        '<button class="btn btn-primary" data-action="fw-again">جولة جديدة</button>' +
+        '<button class="btn btn-primary" data-action="fw-again">وزّع من جديد</button>' +
         '<button class="btn btn-secondary" data-action="fw-setup">تغيير اللاعبين</button>' +
         '<button class="btn btn-ghost" data-action="fw-exit">الألعاب</button>' +
         "</div></section>"
@@ -369,58 +318,51 @@
         clearTimer(state);
         ctx.onExit();
         return true;
-      case "fw-start": {
+      case "fw-deal": {
         const v = validateNames(state);
         if (!v.ok) {
           ctx.alert(v.msg);
           return true;
         }
-        if (deck().length < 20) {
-          ctx.alert("البطاقات ما تحمّلت — حدّث الصفحة");
+        if (uniqueCards().length < state.playerCount) {
+          ctx.alert("الكلمات ما تحمّلت — حدّث الصفحة");
           return true;
         }
-        startMatch(state);
-        startTurn(state);
+        deal(state);
         state.step = "fw-pass";
         return true;
       }
-      case "fw-open-card":
-        startTurn(state);
-        startTimer(state, function () {
-          const node = document.querySelector("[data-fw-timer]");
-          if (node) node.textContent = formatTime(Math.max(0, state.seconds));
-        });
-        state.step = "fw-card";
+      case "fw-open-role":
+        state.step = "fw-role";
         return true;
-      case "fw-correct":
-        state.turnGot += 1;
-        state.scores[state.explainer] += 1;
-        nextCard(state);
+      case "fw-next-reveal":
+        if (state.revealIndex >= state.playerCount - 1) {
+          state.step = "fw-play";
+        } else {
+          state.revealIndex += 1;
+          state.step = "fw-pass";
+        }
         return true;
-      case "fw-skip":
-        state.turnSkip += 1;
-        nextCard(state);
+      case "fw-toggle-timer":
+        if (state.playTimerId) {
+          clearTimer(state);
+        } else {
+          state.playSeconds = 180;
+          state.playTimerId = setInterval(function () {
+            state.playSeconds -= 1;
+            const node = document.querySelector("[data-fw-timer]");
+            if (node) node.textContent = formatTime(Math.max(0, state.playSeconds));
+            if (state.playSeconds <= 0) clearTimer(state);
+          }, 1000);
+        }
         return true;
-      case "fw-taboo":
-        state.turnTaboo += 1;
-        nextCard(state);
-        return true;
-      case "fw-next-turn":
+      case "fw-reveal":
         clearTimer(state);
-        state.finishedTurns += 1;
-        state.explainer = (state.explainer + 1) % state.playerCount;
-        startTurn(state);
-        state.step = "fw-pass";
-        return true;
-      case "fw-final":
-        clearTimer(state);
-        state.finishedTurns += 1;
-        state.step = "fw-final";
+        state.step = "fw-reveal";
         return true;
       case "fw-again":
         clearTimer(state);
-        startMatch(state);
-        startTurn(state);
+        deal(state);
         state.step = "fw-pass";
         return true;
       default:
