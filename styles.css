@@ -601,6 +601,15 @@ button {
   transform: scale(0.98);
 }
 
+.round-bar {
+  margin-bottom: 8px;
+}
+
+.replay-btn {
+  border-color: rgba(255, 180, 84, 0.45);
+  color: var(--accent);
+}
+
 .brand.compact {
   padding-top: 4px;
 }

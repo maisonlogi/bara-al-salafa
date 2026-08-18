@@ -136,6 +136,75 @@
     state.discussSeconds = 180;
   }
 
+  function replayRound() {
+    if (!state.category) return;
+    const pool = getItems(state.category);
+    if (pool.length < 7) {
+      shakeAndAlert("الموضوع يحتاج على الأقل 7 عناصر — عدّله من الإعدادات");
+      return;
+    }
+    resetRoundKeepPlayers();
+    pickSecretAndOutsider();
+    go("pass");
+  }
+
+  function undoRoundStep() {
+    switch (state.step) {
+      case "role":
+        state.revealOpen = false;
+        go("pass");
+        break;
+      case "pass":
+        if (state.revealIndex <= 0) {
+          go("category");
+          return;
+        }
+        state.revealIndex -= 1;
+        state.revealOpen = false;
+        go("pass");
+        break;
+      case "discuss":
+        clearDiscussTimer();
+        state.revealIndex = state.playerCount - 1;
+        state.revealOpen = false;
+        go("pass");
+        break;
+      case "vote":
+        state.selectedVote = null;
+        go("votePass");
+        break;
+      case "votePass":
+        if (state.currentVoter <= 0) {
+          go("discuss");
+          return;
+        }
+        state.currentVoter -= 1;
+        state.selectedVote = null;
+        go("votePass");
+        break;
+      case "outsiderIntro":
+        state.currentVoter = state.playerCount - 1;
+        state.selectedVote = null;
+        go("votePass");
+        break;
+      case "guess":
+        state.selectedGuess = null;
+        go("outsiderIntro");
+        break;
+      default:
+        break;
+    }
+  }
+
+  function roundBar() {
+    return `
+      <div class="topbar round-bar">
+        <button class="icon-btn" data-action="undo-round" type="button">تراجع</button>
+        <button class="icon-btn replay-btn" data-action="replay-round" type="button">إعادة اللعبة</button>
+      </div>
+    `;
+  }
+
   function clearDiscussTimer() {
     if (state.discussTimerId) {
       clearInterval(state.discussTimerId);
@@ -645,6 +714,7 @@
     const name = state.players[state.revealIndex];
     return el(`
       <section class="screen">
+        ${roundBar()}
         ${steps(2)}
         <div class="cover-card">
           <div class="pulse-ring" aria-hidden="true"></div>
@@ -654,7 +724,6 @@
         </div>
         <div class="actions">
           <button class="btn btn-primary" data-action="open-role">أنا ${escapeHtml(name)} — أظهر دوري</button>
-          ${state.revealIndex === 0 ? `<button class="btn btn-ghost" data-action="category">رجوع</button>` : ""}
         </div>
       </section>
     `);
@@ -684,6 +753,7 @@
 
     return el(`
       <section class="screen">
+        ${roundBar()}
         ${steps(2)}
         <div class="panel role-reveal">
           <div class="eyebrow" style="color:var(--muted);font-size:.9rem;margin-bottom:6px">${escapeHtml(name)}</div>
@@ -699,6 +769,7 @@
   function renderDiscuss() {
     return el(`
       <section class="screen">
+        ${roundBar()}
         ${steps(3)}
         <header class="brand compact">
           <h1>النقاش</h1>
@@ -723,6 +794,7 @@
     const name = state.players[state.currentVoter];
     return el(`
       <section class="screen">
+        ${roundBar()}
         <div class="cover-card">
           <div class="eyebrow">دور التصويت</div>
           <h2>${escapeHtml(name)}</h2>
@@ -747,6 +819,7 @@
 
     return el(`
       <section class="screen">
+        ${roundBar()}
         <div class="panel">
           <h2>${escapeHtml(state.players[voter])}</h2>
           <p class="hint">مين في رأيك برا السالفة؟</p>
@@ -763,6 +836,7 @@
     const outsider = state.players[state.outsiderIndex];
     return el(`
       <section class="screen">
+        ${roundBar()}
         <div class="cover-card">
           <div class="eyebrow">فرصة أخيرة</div>
           <h2>${escapeHtml(outsider)}</h2>
@@ -785,6 +859,7 @@
 
     return el(`
       <section class="screen">
+        ${roundBar()}
         <div class="panel">
           <h2>خمّن السر</h2>
           <p class="hint">واحد من هالسبعة هو السر الحقيقي. اختار بدقّة.</p>
@@ -1151,6 +1226,12 @@
         go("pass");
         break;
       }
+      case "undo-round":
+        undoRoundStep();
+        break;
+      case "replay-round":
+        replayRound();
+        break;
       case "open-role":
         state.revealOpen = true;
         go("role");
