@@ -239,9 +239,6 @@
 
     if (state.gameMode === "forbidden" && window.ForbiddenWord && forbiddenState) {
       window.__forbiddenRerender = () => render();
-      window.__forbiddenExtraTopics = (store.custom || []).map(function (c) {
-        return { id: c.id, title: c.title, words: c.items || [] };
-      });
       const node = window.ForbiddenWord.render(forbiddenState, { el, escapeHtml, escapeAttr });
       app.appendChild(node);
       return;
@@ -293,7 +290,7 @@
           <button class="game-card" data-action="pick-forbidden" type="button">
             <span class="game-card-kicker">عربي</span>
             <strong>الكلمة الممنوعة</strong>
-            <span>كل واحد عنده كلمة ممنوع ما يشوفها. الباقي يعرفونها ويستدرجونه.</span>
+            <span>اشرح الكلمة بدون ما تقول الممنوعات. بطاقات عشوائية من 100+ موضوع.</span>
           </button>
         </div>
       </section>
@@ -1001,11 +998,6 @@
     }
 
     if (state.gameMode === "forbidden" && window.ForbiddenWord && forbiddenState && action.startsWith("fw-")) {
-      if (action === "fw-pick-topic") {
-        window.ForbiddenWord.pickTopic(forbiddenState, t.dataset.id);
-        render();
-        return;
-      }
       const handled = window.ForbiddenWord.handleAction(action, forbiddenState, {
         onExit: () => {
           state.gameMode = "pick";

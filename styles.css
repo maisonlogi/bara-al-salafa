@@ -953,30 +953,53 @@ html[dir="ltr"] .app,
   direction: ltr;
 }
 
-.forbid-list {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.forbid-card {
-  padding: 16px 14px;
-  border-radius: 16px;
-  border: 1px dashed rgba(255, 93, 108, 0.4);
-  background: rgba(255, 93, 108, 0.08);
+.taboo-top {
   text-align: center;
 }
 
-.forbid-owner {
-  margin: 0 0 6px;
-  color: var(--muted);
-  font-size: 0.88rem;
+.taboo-card {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 16px 18px;
+  text-align: center;
+  box-shadow: var(--shadow);
 }
 
-.forbid-card h3 {
-  margin: 0;
-  font-size: 1.45rem;
+.taboo-topic {
+  margin: 0 0 8px;
+  color: var(--teal);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.taboo-card h2 {
+  margin: 0 0 14px;
+  font-size: clamp(2rem, 9vw, 2.8rem);
+  color: var(--accent);
+}
+
+.taboo-label {
+  margin: 0 0 8px;
   color: var(--danger);
+  font-weight: 800;
+}
+
+.taboo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.taboo-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 93, 108, 0.12);
+  border: 1px solid rgba(255, 93, 108, 0.28);
+  color: var(--danger);
+  font-weight: 800;
 }
 
 
