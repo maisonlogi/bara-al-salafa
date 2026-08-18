@@ -5,7 +5,7 @@ css = (root / "styles.css").read_text(encoding="utf-8")
 scripts = "\n".join(
     [
         (root / name).read_text(encoding="utf-8")
-        for name in ("data.js", "whoami-data.js", "whoami.js", "forbidden.js", "game.js")
+        for name in ("data.js", "whoami-data.js", "whoami.js", "forbidden-data.js", "forbidden.js", "game.js")
     ]
 )
 

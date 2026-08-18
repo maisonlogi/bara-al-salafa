@@ -1,16 +1,6 @@
 (() => {
   "use strict";
 
-  const TOPICS = [
-    { id: "footballPlayers", title: "لاعبين كرة قدم" },
-    { id: "footballClubs", title: "أندية كرة قدم" },
-    { id: "celebrities", title: "شخصيات مشهورة" },
-    { id: "countries", title: "أسماء دول" },
-    { id: "algerianFood", title: "أكلات جزائرية" },
-    { id: "characters", title: "شخصيات أنمي" },
-    { id: "animes", title: "أسماء أنميات" },
-  ];
-
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i -= 1) {
@@ -29,7 +19,7 @@
         extra.push(t);
       });
     }
-    return TOPICS.concat(extra);
+    return (window.FORBIDDEN_TOPICS || []).concat(extra);
   }
 
   function wordsFor(topicId) {
@@ -37,8 +27,10 @@
       return t.id === topicId;
     });
     if (extra && extra.words) return extra.words.slice();
-    const base = window.GAME_DATA && window.GAME_DATA[topicId];
-    return base ? base.slice() : [];
+    const found = (window.FORBIDDEN_TOPICS || []).find(function (t) {
+      return t.id === topicId;
+    });
+    return found && found.words ? found.words.slice() : [];
   }
 
   function topicTitle(id) {
@@ -215,8 +207,8 @@
           '" type="button"><strong>' +
           ctx.escapeHtml(t.title) +
           "</strong><span>" +
-          n +
-          " كلمة</span></button>"
+          ctx.escapeHtml(t.desc || n + " كلمة") +
+          "</span></button>"
         );
       })
       .join("");
