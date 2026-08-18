@@ -100,7 +100,7 @@
               <span class="num">1</span>
               <div>
                 <strong>2 or 3 players</strong>
-                <p>Each person gets a secret football star from the top 800 by market value.</p>
+                <p>Each person gets a secret football star from the top 700 by peak market value, including retired legends.</p>
               </div>
             </li>
             <li>

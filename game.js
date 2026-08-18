@@ -285,7 +285,7 @@
           <button class="game-card game-card-en" data-action="pick-whoami" type="button">
             <span class="game-card-kicker">English</span>
             <strong>Who Am I?</strong>
-            <span>Top 800 footballers by market value, with photos. You see everyone else — never yourself.</span>
+            <span>Top 700 footballers by peak market value, including legends. You see everyone else — never yourself.</span>
           </button>
           <button class="game-card" data-action="pick-forbidden" type="button">
             <span class="game-card-kicker">عربي</span>
